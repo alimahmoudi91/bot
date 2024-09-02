@@ -1,0 +1,56 @@
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+import jdatetime
+
+# توکن ربات تلگرام خود را اینجا قرار دهید
+TELEGRAM_TOKEN = '7216872249:AAHAw9ZZuMrBCV7Z34YL4BfbNC1p9ECd_Zc'
+
+# تبدیل تاریخ شمسی به میلادی
+def convert_to_gregorian(year, month, day):
+    try:
+        # تبدیل تاریخ شمسی به میلادی
+        jalali_date = jdatetime.date(year, month, day)
+        gregorian_date = jalali_date.togregorian()
+        return gregorian_date.strftime("%Y-%m-%d")
+    except Exception as e:
+        return f"خطا در تبدیل تاریخ: {e}"
+
+# تابعی برای شروع ربات و ارسال پیام خوش‌آمدگویی
+def start(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('سلام! من یک ربات تبدیل تاریخ شمسی به میلادی هستم. لطفا تاریخ را به فرمت "روز/ماه/سال" وارد کنید. مثال: 1402/06/02')
+
+# تابعی برای پردازش پیام‌های کاربر
+def handle_message(update: Update, context: CallbackContext) -> None:
+    user_message = update.message.text.strip()
+    
+    try:
+        # دریافت روز، ماه و سال از ورودی کاربر
+        day, month, year = map(int, user_message.split('/'))
+        
+        # تبدیل تاریخ به میلادی
+        gregorian_date = convert_to_gregorian(year, month, day)
+        update.message.reply_text(f"تاریخ میلادی معادل: {gregorian_date}")
+    
+    except ValueError:
+        update.message.reply_text("لطفا تاریخ را به فرمت صحیح وارد کنید. مثال: 1402/06/02")
+
+# تابع اصلی برای راه‌اندازی ربات
+def main():
+    # ایجاد Updater و گذراندن توکن ربات
+    updater = Updater(TELEGRAM_TOKEN)
+
+    # گرفتن dispatcher برای ثبت هندلرها
+    dispatcher = updater.dispatcher
+
+    # اضافه کردن CommandHandler برای /start
+    dispatcher.add_handler(CommandHandler("start", start))
+
+    # اضافه کردن MessageHandler برای پیام‌های متنی
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+
+    # شروع ربات
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
